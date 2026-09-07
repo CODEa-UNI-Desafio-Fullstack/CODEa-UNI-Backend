@@ -1,7 +1,6 @@
 package codea.uni.desafio_fullstack.operations.interfaces.rest;
 
 import codea.uni.desafio_fullstack.operations.domain.model.commands.DeleteShiftCommand;
-import codea.uni.desafio_fullstack.operations.domain.model.queries.GetAllShiftsQuery;
 import codea.uni.desafio_fullstack.operations.domain.model.queries.GetShiftByIdQuery;
 import codea.uni.desafio_fullstack.operations.domain.model.queries.GetShiftsByFilterQuery;
 import codea.uni.desafio_fullstack.operations.domain.services.ShiftCommandService;
@@ -49,10 +48,12 @@ public class ShiftController {
         return new ResponseEntity<>(responseResource, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get all Shifts")
+    @Operation(summary = "Get all Shifts with optional filters")
     @GetMapping
-    public ResponseEntity<List<ShiftResource>> getAllShifts() {
-        var query = new GetAllShiftsQuery();
+    public ResponseEntity<List<ShiftResource>> getAllShifts(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) Boolean shiftType) {
+        var query = new GetShiftsByFilterQuery(date, shiftType);
         var shifts = this.shiftQueryService.handle(query);
         var resources = shifts.stream()
                 .map(ShiftResourceFromEntityAssembler::toResourceFromEntity)
@@ -70,22 +71,6 @@ public class ShiftController {
         }
         var resource = ShiftResourceFromEntityAssembler.toResourceFromEntity(shift.get());
         return ResponseEntity.ok(resource);
-    }
-
-    @Operation(summary = "Get Shifts filtered by date and/or shiftType (at least one parameter is required)")
-    @GetMapping("/filter")
-    public ResponseEntity<List<ShiftResource>> getShiftsByFilter(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) Boolean shiftType) {
-        if (date == null && shiftType == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        var query = new GetShiftsByFilterQuery(date, shiftType);
-        var shifts = this.shiftQueryService.handle(query);
-        var resources = shifts.stream()
-                .map(ShiftResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
     }
 
     @Operation(summary = "Update Shift Details")

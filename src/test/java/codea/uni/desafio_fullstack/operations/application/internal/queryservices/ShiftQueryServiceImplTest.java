@@ -109,8 +109,14 @@ class ShiftQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("Should fail when both filter parameters are null")
-    void shouldFailWhenBothFilterParametersAreNull() {
-        assertThrows(IllegalArgumentException.class, () -> new GetShiftsByFilterQuery(null, null));
+    @DisplayName("Should get all shifts when both filter parameters are null")
+    void shouldGetAllShiftsWhenBothFilterParametersAreNull() {
+        Shift shift1 = new Shift(new CreateShiftCommand(LocalDate.of(2026, 9, 7), true, 8));
+        when(shiftRepository.findAll()).thenReturn(List.of(shift1));
+
+        List<Shift> results = shiftQueryService.handle(new GetShiftsByFilterQuery(null, null));
+
+        assertEquals(1, results.size());
+        verify(shiftRepository, times(1)).findAll();
     }
 }

@@ -41,7 +41,7 @@ public class ShiftQueryServiceImpl implements ShiftQueryService {
         } else if (query.shiftType() != null) {
             return this.shiftRepository.findAllByShiftType(query.shiftType());
         } else {
-            throw new IllegalArgumentException("At least one filter parameter must be provided");
+            return this.shiftRepository.findAll();
         }
     }
 }
