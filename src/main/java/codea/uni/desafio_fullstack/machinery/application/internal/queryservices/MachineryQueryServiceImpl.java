@@ -3,7 +3,9 @@ package codea.uni.desafio_fullstack.machinery.application.internal.queryservices
 import codea.uni.desafio_fullstack.machinery.domain.model.aggregates.Machinery;
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryByMachineryTypeIdQuery;
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryByStateQuery;
+import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryQuery;
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetMachineryByCodeQuery;
+import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetMachineryByFilterQuery;
 import codea.uni.desafio_fullstack.machinery.domain.services.MachineryQueryService;
 import codea.uni.desafio_fullstack.machinery.infrastructure.persistence.jpa.repositories.MachineryRepository;
 import codea.uni.desafio_fullstack.machinery.infrastructure.persistence.jpa.repositories.MachineryTypeRepository;
@@ -40,7 +42,38 @@ public class MachineryQueryServiceImpl implements MachineryQueryService {
     }
 
     @Override
-    public List<Machinery> handle(codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryQuery query) {
+    public List<Machinery> handle(GetAllMachineryQuery query) {
         return this.machineryRepository.findAll();
+    }
+
+    @Override
+    public List<Machinery> handle(GetMachineryByFilterQuery query) {
+        List<Machinery> machineries = this.machineryRepository.findAll();
+        if (machineries.isEmpty()) {
+            return List.of();
+        }
+
+        return machineries.stream()
+                .filter(m -> {
+                    if (query.state() != null && !query.state().equals(m.isActive())) {
+                        return false;
+                    }
+
+                    if (query.machineryTypeId() != null) {
+                        if (m.getMachineryType() == null || !query.machineryTypeId().equals(m.getMachineryType().getId())) {
+                            return false;
+                        }
+                    }
+
+                    if (query.code() != null && !query.code().isBlank()) {
+                        String term = query.code().trim().toLowerCase();
+                        if (m.getCode() == null || !m.getCode().toLowerCase().contains(term)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+                .toList();
     }
 }

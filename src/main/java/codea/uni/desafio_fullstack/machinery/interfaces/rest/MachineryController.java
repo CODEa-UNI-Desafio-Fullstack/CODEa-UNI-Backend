@@ -7,6 +7,7 @@ import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachiner
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryByStateQuery;
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetAllMachineryQuery;
 import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetMachineryByCodeQuery;
+import codea.uni.desafio_fullstack.machinery.domain.model.queries.GetMachineryByFilterQuery;
 import codea.uni.desafio_fullstack.machinery.domain.services.MachineryCommandService;
 import codea.uni.desafio_fullstack.machinery.domain.services.MachineryQueryService;
 import codea.uni.desafio_fullstack.machinery.interfaces.rest.resources.CreateMachineryResource;
@@ -51,11 +52,14 @@ public class MachineryController {
         return new ResponseEntity<>(createMachineryFromResource, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get All Machineries")
+    @Operation(summary = "Get All Machineries with optional filters")
     @GetMapping
-    public ResponseEntity<List<MachineryResource>> getAllMachinery() {
-        var getAllMachineryQuery = new GetAllMachineryQuery();
-        var machineries = this.machineryQueryService.handle(getAllMachineryQuery);
+    public ResponseEntity<List<MachineryResource>> getAllMachinery(
+            @RequestParam(required = false) Boolean state,
+            @RequestParam(required = false) Integer machineryTypeId,
+            @RequestParam(required = false) String code) {
+        var query = new GetMachineryByFilterQuery(state, machineryTypeId, code);
+        var machineries = this.machineryQueryService.handle(query);
         var machineryResources = machineries.stream()
                 .map(MachineryResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -72,28 +76,6 @@ public class MachineryController {
         }
         var machineryResource = MachineryResourceFromEntityAssembler.toResourceFromEntity(machinery.get());
         return ResponseEntity.ok(machineryResource);
-    }
-
-    @Operation(summary = "Get All Machinery by State")
-    @GetMapping("/state/{state}")
-    public ResponseEntity<List<MachineryResource>> getAllMachineryByState(@PathVariable boolean state) {
-        var getAllMachineryByStateQuery = new GetAllMachineryByStateQuery(state);
-        var machineries = this.machineryQueryService.handle(getAllMachineryByStateQuery);
-        var machineryResources = machineries.stream()
-                .map(MachineryResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(machineryResources);
-    }
-
-    @Operation(summary = "Get All Machinery by Machinery Type ID")
-    @GetMapping("/machinery-type/{machineryTypeId}")
-    public ResponseEntity<List<MachineryResource>> getAllMachineryByMachineryTypeId(@PathVariable Integer machineryTypeId) {
-        var getAllMachineryByMachineryTypeIdQuery = new GetAllMachineryByMachineryTypeIdQuery(machineryTypeId);
-        var machineries = this.machineryQueryService.handle(getAllMachineryByMachineryTypeIdQuery);
-        var machineryResources = machineries.stream()
-                .map(MachineryResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(machineryResources);
     }
 
     @Operation(summary = "Update Machinery Type of a Machinery")
