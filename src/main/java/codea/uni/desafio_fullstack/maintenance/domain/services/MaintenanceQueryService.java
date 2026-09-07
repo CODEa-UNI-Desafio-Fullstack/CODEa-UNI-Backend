@@ -12,4 +12,5 @@ public interface MaintenanceQueryService {
     List<Maintenance> handle(GetMaintenancesByMachineryCodeQuery query);
     List<Maintenance> handle(GetMaintenancesByDateRangeQuery query);
     List<Maintenance> handle(GetMaintenancesByOperatorIdQuery query);
+    List<Maintenance> handle(GetMaintenancesByFilterQuery query);
 }

@@ -4,6 +4,10 @@ import codea.uni.desafio_fullstack.machinery.interfaces.acl.MachineryContextFaca
 import codea.uni.desafio_fullstack.maintenance.application.internal.outboundservices.acl.ExternalMachineryService;
 import org.springframework.stereotype.Service;
 
+import codea.uni.desafio_fullstack.machinery.interfaces.acl.records.MachinerySummaryRecord;
+
+import java.util.List;
+
 @Service("maintenanceExternalMachineryService")
 public class ExternalMachineryServiceImpl implements ExternalMachineryService {
 
@@ -23,4 +27,8 @@ public class ExternalMachineryServiceImpl implements ExternalMachineryService {
         this.machineryContextFacade.resetMachineryAfterMaintenance(machineryCode);
     }
 
+    @Override
+    public List<MachinerySummaryRecord> getAllMachineries() {
+        return this.machineryContextFacade.getAllMachineriesForProjection();
+    }
 }

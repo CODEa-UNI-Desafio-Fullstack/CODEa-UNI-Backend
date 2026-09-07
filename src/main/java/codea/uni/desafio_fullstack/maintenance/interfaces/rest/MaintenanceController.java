@@ -48,10 +48,15 @@ public class MaintenanceController {
         return new ResponseEntity<>(responseResource, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get all Maintenances")
+    @Operation(summary = "Get all Maintenances with optional filters")
     @GetMapping
-    public ResponseEntity<List<MaintenanceResource>> getAllMaintenances() {
-        var query = new GetAllMaintenancesQuery();
+    public ResponseEntity<List<MaintenanceResource>> getAllMaintenances(
+            @RequestParam(required = false) UUID operatorId,
+            @RequestParam(required = false) String machineryCode,
+            @RequestParam(required = false) Integer machineryTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        var query = new GetMaintenancesByFilterQuery(operatorId, machineryCode, machineryTypeId, startDate, endDate);
         var maintenances = this.maintenanceQueryService.handle(query);
         var resources = maintenances.stream()
                 .map(MaintenanceResourceFromEntityAssembler::toResourceFromEntity)
@@ -69,41 +74,6 @@ public class MaintenanceController {
         }
         var resource = MaintenanceResourceFromEntityAssembler.toResourceFromEntity(maintenance.get());
         return ResponseEntity.ok(resource);
-    }
-
-    @Operation(summary = "Get all Maintenances by Machinery Code")
-    @GetMapping("/machinery/{machineryCode}")
-    public ResponseEntity<List<MaintenanceResource>> getMaintenancesByMachineryCode(@PathVariable String machineryCode) {
-        var query = new GetMaintenancesByMachineryCodeQuery(machineryCode);
-        var maintenances = this.maintenanceQueryService.handle(query);
-        var resources = maintenances.stream()
-                .map(MaintenanceResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
-    }
-
-    @Operation(summary = "Get all Maintenances by Operator ID")
-    @GetMapping("/operator/{operatorId}")
-    public ResponseEntity<List<MaintenanceResource>> getMaintenancesByOperatorId(@PathVariable UUID operatorId) {
-        var query = new GetMaintenancesByOperatorIdQuery(operatorId);
-        var maintenances = this.maintenanceQueryService.handle(query);
-        var resources = maintenances.stream()
-                .map(MaintenanceResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
-    }
-
-    @Operation(summary = "Get all Maintenances by Date Range")
-    @GetMapping("/date-range")
-    public ResponseEntity<List<MaintenanceResource>> getMaintenancesByDateRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        var query = new GetMaintenancesByDateRangeQuery(startDate, endDate);
-        var maintenances = this.maintenanceQueryService.handle(query);
-        var resources = maintenances.stream()
-                .map(MaintenanceResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
     }
 
     @Operation(summary = "Update Maintenance Details")

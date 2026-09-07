@@ -46,4 +46,20 @@ class ExternalMachineryServiceImplTest {
         assertFalse(exists);
         verify(machineryContextFacade, times(1)).existsByCode("UNKNOWN");
     }
+
+    @Test
+    @DisplayName("Should return all machineries from MachineryContextFacade")
+    void shouldReturnAllMachineries() {
+        var summary = new codea.uni.desafio_fullstack.machinery.interfaces.acl.records.MachinerySummaryRecord(
+                "CAM-001", 1, "Camión de Acarreo", 100.0f, 500, true, false, 400.0f
+        );
+        when(machineryContextFacade.getAllMachineriesForProjection()).thenReturn(java.util.List.of(summary));
+
+        var result = externalMachineryService.getAllMachineries();
+
+        org.junit.jupiter.api.Assertions.assertNotNull(result);
+        org.junit.jupiter.api.Assertions.assertEquals(1, result.size());
+        org.junit.jupiter.api.Assertions.assertEquals("CAM-001", result.get(0).code());
+        verify(machineryContextFacade, times(1)).getAllMachineriesForProjection();
+    }
 }

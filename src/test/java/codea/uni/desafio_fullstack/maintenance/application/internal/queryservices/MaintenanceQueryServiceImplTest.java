@@ -1,5 +1,7 @@
 package codea.uni.desafio_fullstack.maintenance.application.internal.queryservices;
 
+import codea.uni.desafio_fullstack.machinery.interfaces.acl.records.MachinerySummaryRecord;
+import codea.uni.desafio_fullstack.maintenance.application.internal.outboundservices.acl.ExternalMachineryService;
 import codea.uni.desafio_fullstack.maintenance.domain.model.aggregates.Maintenance;
 import codea.uni.desafio_fullstack.maintenance.domain.model.commands.CreateMaintenanceCommand;
 import codea.uni.desafio_fullstack.maintenance.domain.model.queries.*;
@@ -25,11 +27,14 @@ class MaintenanceQueryServiceImplTest {
     @Mock
     private MaintenanceRepository maintenanceRepository;
 
+    @Mock
+    private ExternalMachineryService externalMachineryService;
+
     private MaintenanceQueryServiceImpl maintenanceQueryService;
 
     @BeforeEach
     void setUp() {
-        maintenanceQueryService = new MaintenanceQueryServiceImpl(maintenanceRepository);
+        maintenanceQueryService = new MaintenanceQueryServiceImpl(maintenanceRepository, externalMachineryService);
     }
 
     private Maintenance createSampleMaintenance(String machineryCode, LocalDate date, UUID operatorId) {
@@ -131,5 +136,119 @@ class MaintenanceQueryServiceImplTest {
 
         assertEquals(1, result.size());
         verify(maintenanceRepository, times(1)).findAllByDateBetween(startDate, endDate);
+    }
+
+    @Test
+    @DisplayName("Should return all maintenances when filter query has no filters")
+    void shouldReturnAllMaintenances_WhenNoFiltersProvided() {
+        UUID op1 = UUID.randomUUID();
+        UUID op2 = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 1), op1);
+        Maintenance m2 = createSampleMaintenance("EXC-001", LocalDate.of(2026, 9, 5), op2);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2));
+
+        var query = new GetMaintenancesByFilterQuery(null, null, null, null, null);
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(2, results.size());
+    }
+
+    @Test
+    @DisplayName("Should filter maintenances by operatorId")
+    void shouldFilterMaintenances_ByOperatorId() {
+        UUID op1 = UUID.randomUUID();
+        UUID op2 = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 1), op1);
+        Maintenance m2 = createSampleMaintenance("EXC-001", LocalDate.of(2026, 9, 5), op2);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2));
+
+        var query = new GetMaintenancesByFilterQuery(op1, null, null, null, null);
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(1, results.size());
+        assertEquals("CAM-001", results.get(0).getMachineryCode());
+        assertEquals(op1, results.get(0).getOperatorId());
+    }
+
+    @Test
+    @DisplayName("Should filter maintenances by machineryCode (case-insensitive substring)")
+    void shouldFilterMaintenances_ByMachineryCode() {
+        UUID op = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 1), op);
+        Maintenance m2 = createSampleMaintenance("EXC-001", LocalDate.of(2026, 9, 5), op);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2));
+
+        var query = new GetMaintenancesByFilterQuery(null, "cam", null, null, null);
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(1, results.size());
+        assertEquals("CAM-001", results.get(0).getMachineryCode());
+    }
+
+    @Test
+    @DisplayName("Should filter maintenances by date range")
+    void shouldFilterMaintenances_ByDateRange() {
+        UUID op = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 2), op);
+        Maintenance m2 = createSampleMaintenance("CAM-002", LocalDate.of(2026, 9, 15), op);
+        Maintenance m3 = createSampleMaintenance("CAM-003", LocalDate.of(2026, 9, 28), op);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2, m3));
+
+        var query = new GetMaintenancesByFilterQuery(null, null, null,
+                LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 20));
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(1, results.size());
+        assertEquals("CAM-002", results.get(0).getMachineryCode());
+    }
+
+    @Test
+    @DisplayName("Should filter maintenances by machineryTypeId using external machinery service")
+    void shouldFilterMaintenances_ByMachineryTypeId() {
+        UUID op = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 1), op);
+        Maintenance m2 = createSampleMaintenance("EXC-001", LocalDate.of(2026, 9, 5), op);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2));
+        when(externalMachineryService.getAllMachineries()).thenReturn(List.of(
+                new MachinerySummaryRecord("CAM-001", 1, "Camión de Acarreo", 100.0f, 500, true, false, 400.0f),
+                new MachinerySummaryRecord("EXC-001", 2, "Excavadora", 200.0f, 600, true, false, 400.0f)
+        ));
+
+        // Filter for type ID 2 (Excavadora)
+        var query = new GetMaintenancesByFilterQuery(null, null, 2, null, null);
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(1, results.size());
+        assertEquals("EXC-001", results.get(0).getMachineryCode());
+    }
+
+    @Test
+    @DisplayName("Should filter maintenances combining multiple criteria")
+    void shouldFilterMaintenances_MultipleCriteriaCombined() {
+        UUID op1 = UUID.randomUUID();
+        UUID op2 = UUID.randomUUID();
+        Maintenance m1 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 10), op1);
+        Maintenance m2 = createSampleMaintenance("CAM-002", LocalDate.of(2026, 9, 10), op2);
+        Maintenance m3 = createSampleMaintenance("CAM-001", LocalDate.of(2026, 9, 25), op1);
+
+        when(maintenanceRepository.findAll()).thenReturn(List.of(m1, m2, m3));
+        when(externalMachineryService.getAllMachineries()).thenReturn(List.of(
+                new MachinerySummaryRecord("CAM-001", 1, "Camión de Acarreo", 100.0f, 500, true, false, 400.0f),
+                new MachinerySummaryRecord("CAM-002", 1, "Camión de Acarreo", 100.0f, 500, true, false, 400.0f)
+        ));
+
+        // Filter: op1 + "CAM" + typeId 1 + date between 2026-09-01 and 2026-09-15
+        var query = new GetMaintenancesByFilterQuery(op1, "CAM", 1,
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 15));
+        var results = maintenanceQueryService.handle(query);
+
+        assertEquals(1, results.size());
+        assertEquals("CAM-001", results.get(0).getMachineryCode());
+        assertEquals(LocalDate.of(2026, 9, 10), results.get(0).getDate());
     }
 }
