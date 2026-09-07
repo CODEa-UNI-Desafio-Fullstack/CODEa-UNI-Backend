@@ -1,8 +1,12 @@
 package codea.uni.desafio_fullstack.operations.infrastructure.acl;
 
 import codea.uni.desafio_fullstack.machinery.interfaces.acl.MachineryContextFacade;
+import codea.uni.desafio_fullstack.machinery.interfaces.acl.records.MachinerySummaryRecord;
 import codea.uni.desafio_fullstack.operations.application.internal.outboundservices.acl.ExternalMachineryService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service("operationsExternalMachineryService")
 public class ExternalMachineryServiceImpl implements ExternalMachineryService {
@@ -31,5 +35,15 @@ public class ExternalMachineryServiceImpl implements ExternalMachineryService {
     @Override
     public Object recordWorkedHours(String machineryCode, float workedHours) {
         return this.machineryContextFacade.recordWorkedHours(machineryCode, workedHours);
+    }
+
+    @Override
+    public List<MachinerySummaryRecord> getAllMachineriesForProjection() {
+        return this.machineryContextFacade.getAllMachineriesForProjection();
+    }
+
+    @Override
+    public Optional<MachinerySummaryRecord> getMachinerySummary(String machineryCode) {
+        return this.machineryContextFacade.getMachinerySummary(machineryCode);
     }
 }

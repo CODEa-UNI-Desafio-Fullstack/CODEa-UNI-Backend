@@ -2,6 +2,7 @@ package codea.uni.desafio_fullstack.operators.interfaces.acl;
 
 import codea.uni.desafio_fullstack.operators.domain.model.aggregates.Operator;
 import codea.uni.desafio_fullstack.operators.domain.model.entities.MachineryCertification;
+import codea.uni.desafio_fullstack.operators.domain.model.queries.GetAllOperatorsQuery;
 import codea.uni.desafio_fullstack.operators.domain.model.queries.GetCertificationByOperatorIdAndMachineryTypeIdQuery;
 import codea.uni.desafio_fullstack.operators.domain.model.queries.GetOperatorByIdQuery;
 import codea.uni.desafio_fullstack.operators.domain.model.queries.GetOperatorsByMachineryTypeCertificationQuery;
@@ -84,6 +85,14 @@ public class OperatorContextFacadeImpl implements OperatorContextFacade {
         return operators.stream()
                 .map(Operator::getId)
                 .filter(opId -> isOperatorCertifiedForMachineryType(opId, machineryTypeId, shiftDate))
+                .toList();
+    }
+
+    @Override
+    public List<OperatorSummaryRecord> getAllOperators() {
+        return this.operatorQueryService.handle(new GetAllOperatorsQuery())
+                .stream()
+                .map(this::toSummaryRecord)
                 .toList();
     }
 

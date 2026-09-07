@@ -29,4 +29,7 @@ public interface OperatorContextFacade {
 
     // Retrieves all operator IDs certified for a specific machinery type on a given shift date.
     List<UUID> getCertifiedOperatorIdsForMachineryType(Integer machineryTypeId, LocalDate shiftDate);
+
+    // Retrieves all operators formatted as summaries.
+    List<OperatorSummaryRecord> getAllOperators();
 }
