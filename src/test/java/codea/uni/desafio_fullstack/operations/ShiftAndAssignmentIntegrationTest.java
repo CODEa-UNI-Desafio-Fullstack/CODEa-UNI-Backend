@@ -77,6 +77,11 @@ class ShiftAndAssignmentIntegrationTest {
         when(externalOperatorService.existsOperatorById(operatorId)).thenReturn(true);
         when(externalMachineryService.existsMachineryByCode(machineryCode)).thenReturn(true);
         when(shiftRepository.existsById(shiftId)).thenReturn(true);
+        when(assignmentRepository.existsByShiftIdAndOperatorId(shiftId, operatorId)).thenReturn(false);
+        when(assignmentRepository.existsByShiftIdAndMachineryCode(shiftId, machineryCode)).thenReturn(false);
+        when(externalMachineryService.isMachineryActive(machineryCode)).thenReturn(true);
+        when(externalMachineryService.getMachineryTypeId(machineryCode)).thenReturn(1);
+        when(externalOperatorService.isOperatorCertifiedForMachineryType(eq(operatorId), eq(1), any(LocalDate.class))).thenReturn(true);
 
         when(assignmentRepository.save(any(Assignment.class))).thenAnswer(inv -> {
             Assignment a = inv.getArgument(0);

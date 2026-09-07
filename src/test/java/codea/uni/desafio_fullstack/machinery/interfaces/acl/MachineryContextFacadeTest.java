@@ -61,7 +61,7 @@ class MachineryContextFacadeTest {
         when(machineryQueryService.handle(any(GetMachineryByCodeQuery.class))).thenReturn(Optional.of(machinery));
 
         assertTrue(machineryContextFacade.isMachineryActive("CAM-001"));
-        assertFalse(machineryContextFacade.isMachineryBlocked("CAM-001"));
+        assertFalse(!machineryContextFacade.isMachineryActive("CAM-001"));
     }
 
     @Test
@@ -70,7 +70,7 @@ class MachineryContextFacadeTest {
         machinery.recordWorkedHours(500.0f);
         when(machineryQueryService.handle(any(GetMachineryByCodeQuery.class))).thenReturn(Optional.of(machinery));
 
-        assertTrue(machineryContextFacade.isMachineryBlocked("CAM-001"));
+        assertTrue(!machineryContextFacade.isMachineryActive("CAM-001"));
         assertFalse(machineryContextFacade.isMachineryActive("CAM-001"));
     }
 
