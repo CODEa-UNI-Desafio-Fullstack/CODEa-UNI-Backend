@@ -12,7 +12,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "assignments", indexes = {
+@Table(name = "assignments",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_assignment_shift_machinery", columnNames = {"shift_id", "machinery_code"}),
+                @UniqueConstraint(name = "uk_assignment_shift_operator", columnNames = {"shift_id", "operator_id"})
+        },
+        indexes = {
         @Index(name = "idx_assignment_shift_id", columnList = "shift_id"),
         @Index(name = "idx_assignment_operator_id", columnList = "operator_id"),
         @Index(name = "idx_assignment_machinery_code", columnList = "machinery_code")

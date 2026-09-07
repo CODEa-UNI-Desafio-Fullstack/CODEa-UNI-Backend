@@ -6,4 +6,7 @@ package codea.uni.desafio_fullstack.operations.application.internal.outboundserv
  */
 public interface ExternalMachineryService {
     boolean existsMachineryByCode(String machineryCode);
+    boolean isMachineryActive(String machineryCode);
+    Integer getMachineryTypeId(String machineryCode);
 }
+

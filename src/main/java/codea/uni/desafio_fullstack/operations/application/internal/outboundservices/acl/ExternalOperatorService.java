@@ -1,5 +1,6 @@
 package codea.uni.desafio_fullstack.operations.application.internal.outboundservices.acl;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -8,4 +9,5 @@ import java.util.UUID;
  */
 public interface ExternalOperatorService {
     boolean existsOperatorById(UUID operatorId);
+    boolean isOperatorCertifiedForMachineryType(UUID operatorId, Integer machineryTypeId, LocalDate shiftDate);
 }

@@ -19,11 +19,6 @@ public interface MachineryContextFacade {
     // Checks if a machinery is in ACTIVE state (not blocked, available for operation).
     boolean isMachineryActive(String machineryCode);
 
-
-    // Checks if a machinery is in BLOCKED state.
-    boolean isMachineryBlocked(String machineryCode);
-
-
     // Retrieves the MachineryType ID of a machinery (used by operations context to validate operator certifications).
     Optional<Integer> getMachineryTypeId(String machineryCode);
 

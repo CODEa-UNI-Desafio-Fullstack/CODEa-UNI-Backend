@@ -50,16 +50,6 @@ public class MachineryContextFacadeImpl implements MachineryContextFacade {
     }
 
     @Override
-    public boolean isMachineryBlocked(String machineryCode) {
-        if (machineryCode == null || machineryCode.isBlank()) {
-            return false;
-        }
-        return this.machineryQueryService.handle(new GetMachineryByCodeQuery(machineryCode))
-                .map(Machinery::isBlocked)
-                .orElse(false);
-    }
-
-    @Override
     public Optional<Integer> getMachineryTypeId(String machineryCode) {
         if (machineryCode == null || machineryCode.isBlank()) {
             return Optional.empty();
@@ -70,7 +60,7 @@ public class MachineryContextFacadeImpl implements MachineryContextFacade {
 
     @Override
     public MachineryWorkedHoursResult recordWorkedHours(String machineryCode, float workedHours) {
-        boolean wasBlockedBefore = isMachineryBlocked(machineryCode);
+        boolean wasBlockedBefore = !isMachineryActive(machineryCode);
 
         var command = new RecordMachineryWorkedHoursCommand(machineryCode, workedHours);
         var machinery = this.machineryCommandService.handle(command)

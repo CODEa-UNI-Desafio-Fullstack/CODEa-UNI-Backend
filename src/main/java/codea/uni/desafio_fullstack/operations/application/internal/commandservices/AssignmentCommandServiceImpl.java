@@ -4,12 +4,17 @@ import codea.uni.desafio_fullstack.operations.application.internal.outboundservi
 import codea.uni.desafio_fullstack.operations.application.internal.outboundservices.acl.ExternalOperatorService;
 import codea.uni.desafio_fullstack.operations.domain.model.aggregates.Assignment;
 import codea.uni.desafio_fullstack.operations.domain.model.commands.*;
+import codea.uni.desafio_fullstack.operations.domain.model.exceptions.AssignmentValidationError;
+import codea.uni.desafio_fullstack.operations.domain.model.exceptions.AssignmentValidationException;
 import codea.uni.desafio_fullstack.operations.domain.services.AssignmentCommandService;
 import codea.uni.desafio_fullstack.operations.infrastructure.persistence.jpa.repositories.AssignmentRepository;
 import codea.uni.desafio_fullstack.operations.infrastructure.persistence.jpa.repositories.ShiftRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,6 +40,44 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
     @Override
     public Optional<Assignment> handle(CreateAssignmentCommand command) {
         validateForeignReferences(command.operatorId(), command.machineryCode(), command.shiftId());
+
+        List<AssignmentValidationError> errors = new ArrayList<>();
+
+        //Operator on same shift exists
+        if(this.assignmentRepository.existsByShiftIdAndOperatorId(command.shiftId(), command.operatorId())) {
+            errors.add(new AssignmentValidationError(
+                    "OPERATOR_SHIFT_DUPLICATE",
+                    "El operador ya está asignado a este turno"
+            ));
+        }
+
+        //Equipment on same shift exists
+        if(this.assignmentRepository.existsByShiftIdAndMachineryCode(command.shiftId(), command.machineryCode())) {
+            errors.add(new AssignmentValidationError(
+                    "MACHINERY_SHIFT_DUPLICATE",
+                    "La maquinaria ya está asignada a este turno"
+            ));
+        }
+        //Blocked equipment exception
+        if(!this.externalMachineryService.isMachineryActive(command.machineryCode())){
+            errors.add(new AssignmentValidationError(
+                    "EQUIPMENT_BLOCKED",
+                    "El equipo con codigo " + command.machineryCode() + " no está activo"
+            ));
+        }
+
+        //Equipment Certification exception
+        var machineryType = externalMachineryService.getMachineryTypeId(command.machineryCode());
+        if(!this.externalOperatorService.isOperatorCertifiedForMachineryType(command.operatorId(), machineryType, LocalDate.now())){
+            errors.add(new AssignmentValidationError(
+                    "NO_CERTIFICATION",
+                    "La certificación para la maquinaria de tipo " + machineryType + " no existe o no está activa"
+            ));
+        }
+
+        if(!errors.isEmpty()){
+            throw new AssignmentValidationException(errors);
+        }
 
         var assignment = new Assignment(command);
         var savedAssignment = this.assignmentRepository.save(assignment);

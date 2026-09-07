@@ -12,4 +12,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     List<Assignment> findAllByShiftId(UUID shiftId);
     List<Assignment> findAllByOperatorId(UUID operatorId);
     List<Assignment> findAllByMachineryCode(String machineryCode);
+
+    boolean existsByShiftIdAndMachineryCode(UUID shiftId, String machineryCode);
+    boolean existsByShiftIdAndOperatorId(UUID shiftId, UUID operatorId);
 }
