@@ -10,6 +10,7 @@ import java.util.UUID;
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     List<Assignment> findAllByShiftId(UUID shiftId);
+    List<Assignment> findAllByShiftIdIn(List<UUID> shiftIds);
     List<Assignment> findAllByOperatorId(UUID operatorId);
     List<Assignment> findAllByMachineryCode(String machineryCode);
 

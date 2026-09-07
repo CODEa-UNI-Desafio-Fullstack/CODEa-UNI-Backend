@@ -2,6 +2,8 @@ package codea.uni.desafio_fullstack.operations.interfaces.rest;
 
 import codea.uni.desafio_fullstack.operations.domain.model.commands.DeleteAssignmentCommand;
 import codea.uni.desafio_fullstack.operations.domain.model.queries.GetAssignmentByIdQuery;
+import codea.uni.desafio_fullstack.operations.domain.model.queries.GetAssignmentsByFilterQuery;
+import codea.uni.desafio_fullstack.operations.domain.model.queries.GetMachineryMaintenanceProjectionsQuery;
 import codea.uni.desafio_fullstack.operations.domain.services.AssignmentCommandService;
 import codea.uni.desafio_fullstack.operations.domain.services.AssignmentQueryService;
 import codea.uni.desafio_fullstack.operations.interfaces.rest.resources.*;
@@ -9,10 +11,13 @@ import codea.uni.desafio_fullstack.operations.interfaces.rest.transform.*;
 import codea.uni.desafio_fullstack.shared.interfaces.rest.resources.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,6 +32,36 @@ public class AssignmentController {
                                 AssignmentQueryService assignmentQueryService) {
         this.assignmentCommandService = assignmentCommandService;
         this.assignmentQueryService = assignmentQueryService;
+    }
+
+    @Operation(summary = "Get 7-day maintenance projections for active machineries that will be blocked")
+    @GetMapping("/projections")
+    public ResponseEntity<List<MachineryMaintenanceProjectionResource>> getMachineryMaintenanceProjections(
+            @RequestParam(required = false) String machineryCode,
+            @RequestParam(required = false) String machineryType) {
+        var query = new GetMachineryMaintenanceProjectionsQuery(machineryCode, machineryType);
+        var projections = this.assignmentQueryService.handle(query);
+        var resources = projections.stream()
+                .map(MachineryMaintenanceProjectionResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(resources);
+    }
+
+    @Operation(summary = "Get all assignments with complete details and optional filters")
+    @GetMapping
+    public ResponseEntity<List<AssignmentDetailResource>> getAllAssignments(
+            @RequestParam(required = false) String operatorName,
+            @RequestParam(required = false) String machineryType,
+            @RequestParam(required = false) String machineryCode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Boolean shiftType) {
+        var query = new GetAssignmentsByFilterQuery(operatorName, machineryType, machineryCode, startDate, endDate, shiftType);
+        var assignments = this.assignmentQueryService.handle(query);
+        var resources = assignments.stream()
+                .map(AssignmentDetailResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(resources);
     }
 
     @Operation(summary = "Register a new Assignment")
