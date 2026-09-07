@@ -8,13 +8,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(AssignmentValidationException.class)
     public ResponseEntity<Map<String, Object>> handleAssignmentValidationException(AssignmentValidationException e) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("code", e.getMessage()));
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("code", "ASSIGNMENT_REJECTED");
+        response.put("message", e.getMessage());
+        response.put("errors", e.getErrors());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
