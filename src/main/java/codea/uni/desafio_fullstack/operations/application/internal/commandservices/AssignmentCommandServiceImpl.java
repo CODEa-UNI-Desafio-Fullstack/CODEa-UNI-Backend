@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -107,7 +109,18 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
         }
 
         var assignment = assignmentOptional.get();
-        assignment.startShift(command.timeStart());
+        LocalDateTime resolvedStart;
+        if (command.dateTimeStart() != null) {
+            resolvedStart = command.dateTimeStart();
+        } else if (command.timeStart() != null) {
+            var shift = this.shiftRepository.findById(assignment.getShiftId())
+                    .orElseThrow(() -> new IllegalArgumentException("Shift with id " + assignment.getShiftId() + " does not exist"));
+            resolvedStart = shift.getDate().atTime(command.timeStart());
+        } else {
+            resolvedStart = LocalDateTime.now();
+        }
+
+        assignment.startShift(resolvedStart);
         var updatedAssignment = this.assignmentRepository.save(assignment);
         return Optional.of(updatedAssignment);
     }
@@ -120,7 +133,29 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
         }
 
         var assignment = assignmentOptional.get();
-        assignment.endShift(command.timeEnd());
+        LocalDateTime resolvedEnd;
+        if (command.dateTimeEnd() != null) {
+            resolvedEnd = command.dateTimeEnd();
+        } else if (command.timeEnd() != null) {
+            var shift = this.shiftRepository.findById(assignment.getShiftId())
+                    .orElseThrow(() -> new IllegalArgumentException("Shift with id " + assignment.getShiftId() + " does not exist"));
+            LocalDate baseDate = (assignment.getTimeStart() != null)
+                    ? assignment.getTimeStart().toLocalDate()
+                    : shift.getDate();
+
+            if (assignment.getTimeStart() != null && command.timeEnd().isBefore(assignment.getTimeStart().toLocalTime())) {
+                baseDate = baseDate.plusDays(1);
+            }
+            resolvedEnd = baseDate.atTime(command.timeEnd());
+        } else {
+            resolvedEnd = LocalDateTime.now();
+        }
+
+        assignment.endShift(resolvedEnd);
+
+        if (assignment.getActualShiftTime() != null && assignment.getActualShiftTime() > 0) {
+            this.externalMachineryService.recordWorkedHours(assignment.getMachineryCode(), (float) assignment.getActualShiftTime());
+        }
 
         var updatedAssignment = this.assignmentRepository.save(assignment);
         return Optional.of(updatedAssignment);

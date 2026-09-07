@@ -372,6 +372,54 @@ class AssignmentCommandServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should start assignment with LocalTime resolving date from shift")
+    void shouldStartAssignmentWithLocalTime_ResolvingDateFromShift() {
+        UUID assignmentId = UUID.randomUUID();
+        UUID shiftId = UUID.randomUUID();
+        Assignment assignment = new Assignment(new CreateAssignmentCommand(UUID.randomUUID(), "EQ-001", shiftId));
+        codea.uni.desafio_fullstack.operations.domain.model.aggregates.Shift shift =
+                new codea.uni.desafio_fullstack.operations.domain.model.aggregates.Shift(
+                        new CreateShiftCommand(LocalDate.of(2026, 9, 7), false, 10));
+
+        when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(assignment));
+        when(shiftRepository.findById(shiftId)).thenReturn(Optional.of(shift));
+        when(assignmentRepository.save(any(Assignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StartAssignmentCommand command = new StartAssignmentCommand(assignmentId, java.time.LocalTime.of(19, 0));
+        Optional<Assignment> result = assignmentCommandService.handle(command);
+
+        assertTrue(result.isPresent());
+        assertEquals(LocalDateTime.of(2026, 9, 7, 19, 0), result.get().getTimeStart());
+        verify(assignmentRepository, times(1)).save(assignment);
+    }
+
+    @Test
+    @DisplayName("Should end night assignment crossing midnight with LocalTime and record worked hours on machinery")
+    void shouldEndAssignmentWithLocalTime_CrossingMidnightOnNightShift() {
+        UUID assignmentId = UUID.randomUUID();
+        UUID shiftId = UUID.randomUUID();
+        Assignment assignment = new Assignment(new CreateAssignmentCommand(UUID.randomUUID(), "EQ-001", shiftId));
+        assignment.startShift(LocalDateTime.of(2026, 9, 7, 19, 0));
+
+        codea.uni.desafio_fullstack.operations.domain.model.aggregates.Shift shift =
+                new codea.uni.desafio_fullstack.operations.domain.model.aggregates.Shift(
+                        new CreateShiftCommand(LocalDate.of(2026, 9, 7), false, 10));
+
+        when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(assignment));
+        when(shiftRepository.findById(shiftId)).thenReturn(Optional.of(shift));
+        when(assignmentRepository.save(any(Assignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EndAssignmentCommand command = new EndAssignmentCommand(assignmentId, java.time.LocalTime.of(5, 0));
+        Optional<Assignment> result = assignmentCommandService.handle(command);
+
+        assertTrue(result.isPresent());
+        assertEquals(LocalDateTime.of(2026, 9, 8, 5, 0), result.get().getTimeEnd());
+        assertEquals(10, result.get().getActualShiftTime());
+        verify(externalMachineryService, times(1)).recordWorkedHours("EQ-001", 10.0f);
+        verify(assignmentRepository, times(1)).save(assignment);
+    }
+
+    @Test
     @DisplayName("Should delete assignment successfully")
     void shouldDeleteAssignmentSuccessfully() {
         UUID assignmentId = UUID.randomUUID();
