@@ -27,4 +27,9 @@ public class ExternalMachineryServiceImpl implements ExternalMachineryService {
     public Integer getMachineryTypeId(String machineryCode) {
         return this.machineryContextFacade.getMachineryTypeId(machineryCode).orElse(null);
     }
+
+    @Override
+    public Object recordWorkedHours(String machineryCode, float workedHours) {
+        return this.machineryContextFacade.recordWorkedHours(machineryCode, workedHours);
+    }
 }

@@ -8,5 +8,6 @@ public interface ExternalMachineryService {
     boolean existsMachineryByCode(String machineryCode);
     boolean isMachineryActive(String machineryCode);
     Integer getMachineryTypeId(String machineryCode);
+    Object recordWorkedHours (String machineryCode, float workedHours);
 }
 

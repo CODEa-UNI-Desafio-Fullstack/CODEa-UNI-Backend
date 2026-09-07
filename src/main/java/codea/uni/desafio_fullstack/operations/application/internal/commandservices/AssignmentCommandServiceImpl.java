@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -121,6 +122,11 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
 
         var assignment = assignmentOptional.get();
         assignment.endShift(command.timeEnd());
+
+        var hours = ChronoUnit.HOURS.between(command.timeEnd(), assignmentOptional.get().getTimeStart());
+
+        this.externalMachineryService.recordWorkedHours(assignmentOptional.get().getMachineryCode(), hours);
+
         var updatedAssignment = this.assignmentRepository.save(assignment);
         return Optional.of(updatedAssignment);
     }
