@@ -81,19 +81,10 @@
             <artifactId>spring-restdocs-mockmvc</artifactId>
             <scope>test</scope>
         </dependency>
-            <!-- 1. Para solucionar TODO lo que está en rojo en AuditableAbstractAggregateRoot:
-                 Aporta tanto jakarta.persistence.* como org.springframework.data.* -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jpa</artifactId>
             </dependency>
-            <!-- 2. Para solucionar los errores de OpenApiConfiguration (springdoc): -->
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>2.5.0</version>
-            </dependency>
-            <!-- 3. Asegúrate de tener también starter-web si es un API REST: -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
