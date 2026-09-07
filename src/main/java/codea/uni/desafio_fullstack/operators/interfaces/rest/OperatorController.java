@@ -1,7 +1,7 @@
 package codea.uni.desafio_fullstack.operators.interfaces.rest;
 
-import codea.uni.desafio_fullstack.operators.domain.model.queries.GetAllOperatorsQuery;
 import codea.uni.desafio_fullstack.operators.domain.model.queries.GetOperatorByIdQuery;
+import codea.uni.desafio_fullstack.operators.domain.model.queries.GetOperatorsByFilterQuery;
 import codea.uni.desafio_fullstack.operators.domain.services.OperatorCommandService;
 import codea.uni.desafio_fullstack.operators.domain.services.OperatorQueryService;
 import codea.uni.desafio_fullstack.operators.interfaces.rest.resources.CreateOperatorResource;
@@ -44,10 +44,12 @@ public class OperatorController {
         return new ResponseEntity<>(responseResource, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get all Operators")
+    @Operation(summary = "Get all Operators with optional filters")
     @GetMapping
-    public ResponseEntity<List<OperatorResource>> getAllOperators() {
-        var query = new GetAllOperatorsQuery();
+    public ResponseEntity<List<OperatorResource>> getAllOperators(
+            @RequestParam(required = false) Integer machineryTypeId,
+            @RequestParam(required = false) String name) {
+        var query = new GetOperatorsByFilterQuery(machineryTypeId, name);
         var operators = this.operatorQueryService.handle(query);
         var resources = operators.stream()
                 .map(OperatorResourceFromEntityAssembler::toResourceFromEntity)
@@ -79,16 +81,5 @@ public class OperatorController {
         }
         var responseResource = OperatorResourceFromEntityAssembler.toResourceFromEntity(updated.get());
         return ResponseEntity.ok(responseResource);
-    }
-
-    @Operation(summary = "Get all Operators certified for a specific Machinery Type")
-    @GetMapping("/machinery-type/{machineryTypeId}")
-    public ResponseEntity<List<OperatorResource>> getOperatorsByMachineryTypeId(@PathVariable Integer machineryTypeId) {
-        var query = new codea.uni.desafio_fullstack.operators.domain.model.queries.GetOperatorsByMachineryTypeCertificationQuery(machineryTypeId);
-        var operators = this.operatorQueryService.handle(query);
-        var resources = operators.stream()
-                .map(OperatorResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
     }
 }
