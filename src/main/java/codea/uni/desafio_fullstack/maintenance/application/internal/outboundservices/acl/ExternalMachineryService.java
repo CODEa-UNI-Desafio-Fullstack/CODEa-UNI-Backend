@@ -6,4 +6,5 @@ package codea.uni.desafio_fullstack.maintenance.application.internal.outboundser
  */
 public interface ExternalMachineryService {
     boolean existsMachineryByCode(String machineryCode);
+    void resetMachineryAfterMaintenance(String machineryCode);
 }

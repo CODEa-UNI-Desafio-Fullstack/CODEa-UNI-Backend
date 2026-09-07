@@ -42,6 +42,8 @@ public class MaintenanceCommandServiceImpl implements MaintenanceCommandService 
 
         var maintenance = new Maintenance(command);
         var savedMaintenance = this.maintenanceRepository.save(maintenance);
+        this.externalMachineryService.resetMachineryAfterMaintenance(command.machineryCode());
+
         return Optional.of(savedMaintenance);
     }
 

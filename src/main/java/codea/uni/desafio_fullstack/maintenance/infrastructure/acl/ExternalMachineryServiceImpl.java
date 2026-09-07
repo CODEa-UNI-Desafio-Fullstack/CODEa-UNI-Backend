@@ -17,4 +17,10 @@ public class ExternalMachineryServiceImpl implements ExternalMachineryService {
     public boolean existsMachineryByCode(String machineryCode) {
         return this.machineryContextFacade.existsByCode(machineryCode);
     }
+
+    @Override
+    public void resetMachineryAfterMaintenance(String machineryCode) {
+        this.machineryContextFacade.resetMachineryAfterMaintenance(machineryCode);
+    }
+
 }
