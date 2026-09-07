@@ -121,4 +121,18 @@ class OperatorContextFacadeTest {
         assertEquals(1, certifiedIds.size());
         assertEquals(operatorId, certifiedIds.get(0));
     }
+
+    @Test
+    @DisplayName("getAllOperators should return all operator summary records")
+    void getAllOperators_ReturnsAllOperatorSummaries() {
+        when(operatorQueryService.handle(any(codea.uni.desafio_fullstack.operators.domain.model.queries.GetAllOperatorsQuery.class)))
+                .thenReturn(List.of(operator));
+
+        var summaries = facade.getAllOperators();
+
+        assertNotNull(summaries);
+        assertEquals(1, summaries.size());
+        assertEquals(operatorId, summaries.get(0).id());
+        assertEquals("Alejandro Toledo", summaries.get(0).name());
+    }
 }
