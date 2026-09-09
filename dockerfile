@@ -21,10 +21,10 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 USER spring:spring
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder --chown=spring:spring /app/target/*.jar /app/app.jar
 
 ENV PORT=8080
 
 EXPOSE ${PORT}
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar /app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar /app/app.jar"]
