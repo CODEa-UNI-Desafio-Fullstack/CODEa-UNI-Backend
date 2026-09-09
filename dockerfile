@@ -1,9 +1,9 @@
-FROM eclipse-temurin:21/jdk/alpine as builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
 COPY mvnw pom.xml ./
-copy .mvn .mvn
+COPY .mvn .mvn
 
 RUN chmod +x mvnw
 
@@ -13,7 +13,7 @@ COPY src src
 
 RUN ./mvnw package -DskipTests
 
-FROM eclipse-temurin:21/jdk/alpine as runtime
+FROM eclipse-temurin:21-jdk-alpine as runtime
 
 WORKDIR /app
 
@@ -21,10 +21,10 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 USER spring:spring
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder --chown=spring:spring /app/target/*.jar /app/app.jar
 
 ENV PORT=8080
 
 EXPOSE ${PORT}
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar /app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar /app/app.jar"]
