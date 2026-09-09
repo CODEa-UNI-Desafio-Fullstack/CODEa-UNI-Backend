@@ -1,9 +1,9 @@
-FROM eclipse-temurin:21/jdk/alpine as builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
 COPY mvnw pom.xml ./
-copy .mvn .mvn
+COPY .mvn .mvn
 
 RUN chmod +x mvnw
 
@@ -13,7 +13,7 @@ COPY src src
 
 RUN ./mvnw package -DskipTests
 
-FROM eclipse-temurin:21/jdk/alpine as runtime
+FROM eclipse-temurin:21-jdk-alpine as runtime
 
 WORKDIR /app
 
